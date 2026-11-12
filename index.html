@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Recetario & Pedidos Intimos</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            700: '#be123c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for clean aesthetic */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-rose-50/30 text-slate-800 font-sans min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white/80 backdrop-blur-md border-b border-rose-100 sticky top-0 z-30 transition-all shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-rose-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                        <i class="fa-solid font-bold fa-utensils text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold bg-gradient-to-r from-brand-600 to-rose-500 bg-clip-text text-transparent">
+                            Cocina Privada
+                        </h1>
+                        <p class="text-xs text-slate-400 font-medium">Recetario & Gestor Personal</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="flex space-x-1 sm:space-x-2 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200/60">
+                    <button id="nav-recipes-btn" onclick="switchTab('recipes')" class="px-3 sm:px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-white text-brand-600 shadow-sm">
+                        <i class="fa-solid fa-book-bookmark text-xs"></i>
+                        <span>Recetas</span>
+                        <span id="recipe-count-badge" class="ml-1 text-xs px-1.5 py-0.5 rounded-full bg-rose-100 text-brand-700 font-bold">0</span>
+                    </button>
+                    <button id="nav-orders-btn" onclick="switchTab('orders')" class="px-3 sm:px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 text-slate-600 hover:text-slate-900">
+                        <i class="fa-solid fa-clipboard-list text-xs"></i>
+                        <span>Pedidos</span>
+                        <span id="pending-orders-badge" class="hidden ml-1 text-xs px-1.5 py-0.5 rounded-full bg-amber-500 text-white font-bold">0</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Body -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- Notification Toast -->
+        <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl space-x-3 border border-slate-800">
+            <div id="toast-icon" class="text-emerald-400"><i class="fa-solid fa-circle-check"></i></div>
+            <div id="toast-message" class="text-sm font-medium">Guardado con éxito</div>
+        </div>
+
+        <!-- SECTION 1: RECIPES TAB -->
+        <section id="section-recipes" class="space-y-6">
+            <!-- Header actions & search -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div class="relative flex-grow max-w-md">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="recipe-search" oninput="filterRecipes()" placeholder="Buscar receta o ingrediente..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all">
+                </div>
+                <div class="flex gap-2">
+                    <select id="recipe-category-filter" onchange="filterRecipes()" class="bg-slate-50 border border-slate-200 rounded-xl text-sm px-3 py-2 text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                        <option value="ALL">Todas las Categorías</option>
+                        <option value="Plato Fuerte">Plato Fuerte</option>
+                        <option value="Postres">Postres</option>
+                        <option value="Bebidas">Bebidas</option>
+                        <option value="Botanas">Botanas/Entradas</option>
+                        <option value="Salsas">Salsas/Aderezos</option>
+                        <option value="Otros">Otros</option>
+                    </select>
+                    <button onclick="openRecipeModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-4 py-2 rounded-xl transition-all shadow-md shadow-brand-600/20 flex items-center justify-center space-x-2 shrink-0">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                        <span>Nueva Receta</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recipe Grid -->
+            <div id="recipes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Recipe Cards dynamically loaded -->
+            </div>
+
+            <!-- Empty State Recipes -->
+            <div id="recipes-empty-state" class="hidden flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-dashed border-slate-200 p-8">
+                <div class="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center text-brand-500 mb-4 text-2xl">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-1">Aún no tienes recetas guardadas</h3>
+                <p class="text-slate-500 text-sm max-w-sm mb-6">Comienza a guardar tus secretos culinarios personales aquí. Solo tú podrás leerlos.</p>
+                <button onclick="openRecipeModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-5 py-2.5 rounded-xl transition-all shadow-md shadow-brand-600/20 flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Crear Mi Primera Receta</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ORDERS TAB -->
+        <section id="section-orders" class="hidden space-y-6">
+            <!-- Stats overview bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pendientes</p>
+                        <p id="stat-pending-orders" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-fire-burner"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">En Preparación</p>
+                        <p id="stat-prep-orders" class="text-2xl font-bold text-slate-800">0</p>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Recaudado</p>
+                        <p id="stat-total-revenue" class="text-2xl font-bold text-emerald-600">$0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Action & Search Bar -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-between items-stretch sm:items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex flex-wrap gap-2 items-center">
+                    <button onclick="filterOrdersByStatus('ALL')" class="order-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-900 text-white" data-status="ALL">Todos</button>
+                    <button onclick="filterOrdersByStatus('Pendiente')" class="order-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100" data-status="Pendiente">Pendientes</button>
+                    <button onclick="filterOrdersByStatus('En preparación')" class="order-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100" data-status="En preparación">En preparación</button>
+                    <button onclick="filterOrdersByStatus('Entregado')" class="order-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100" data-status="Entregado">Entregados</button>
+                </div>
+                <button onclick="openOrderModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-4 py-2 rounded-xl transition-all shadow-md shadow-brand-600/20 flex items-center justify-center space-x-2 shrink-0">
+                    <i class="fa-solid fa-cart-plus text-xs"></i>
+                    <span>Nuevo Pedido</span>
+                </button>
+            </div>
+
+            <!-- Orders Table Container -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50/80 border-b border-slate-100 text-xs uppercase font-bold text-slate-400 tracking-wider">
+                                <th class="py-3.5 px-4">Cliente</th>
+                                <th class="py-3.5 px-4">Platillo / Receta</th>
+                                <th class="py-3.5 px-4">Entrega</th>
+                                <th class="py-3.5 px-4">Estado</th>
+                                <th class="py-3.5 px-4 text-right">Importe</th>
+                                <th class="py-3.5 px-4 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Orders dynamically inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Orders Empty State -->
+                <div id="orders-empty-state" class="hidden py-12 text-center">
+                    <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mx-auto mb-3">
+                        <i class="fa-solid fa-box-open text-xl"></i>
+                    </div>
+                    <p class="text-slate-500 font-medium text-sm">No hay pedidos registrados en esta categoría.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: ADD / EDIT RECIPE -->
+    <div id="recipe-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-8 transform transition-all">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h3 id="recipe-modal-title" class="font-bold text-slate-800 text-lg flex items-center space-x-2">
+                    <i class="fa-solid fa-utensils text-brand-600"></i>
+                    <span>Nueva Receta</span>
+                </h3>
+                <button onclick="closeRecipeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="recipe-form" onsubmit="saveRecipe(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <input type="hidden" id="recipe-id">
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nombre de la Receta *</label>
+                        <input type="text" id="recipe-title" required placeholder="Ej. Tarta de Manzana Especial" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Categoría</label>
+                        <select id="recipe-category" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                            <option value="Plato Fuerte">Plato Fuerte</option>
+                            <option value="Postres">Postres</option>
+                            <option value="Bebidas">Bebidas</option>
+                            <option value="Botanas">Botanas/Entradas</option>
+                            <option value="Salsas">Salsas/Aderezos</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tiempo de Preparación (mins)</label>
+                        <input type="number" id="recipe-prep-time" min="1" placeholder="Ej. 45" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">URL de Imagen (Opcional)</label>
+                    <input type="url" id="recipe-image" placeholder="https://ejemplo.com/imagen.jpg" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    <p class="text-[11px] text-slate-400 mt-1">Si la dejas en blanco se usará una imagen sugerida por categoría.</p>
+                </div>
+
+                <!-- Ingredients Dynamic List -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase">Ingredientes *</label>
+                        <button type="button" onclick="addIngredientInput()" class="text-xs text-brand-600 font-bold hover:underline flex items-center space-x-1">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Agregar Ingrediente</span>
+                        </button>
+                    </div>
+                    <div id="ingredients-container" class="space-y-2">
+                        <!-- Dynamic inputs inserted here -->
+                    </div>
+                </div>
+
+                <!-- Preparation steps -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Pasos de Preparación *</label>
+                    <textarea id="recipe-instructions" rows="4" required placeholder="Escribe los pasos de preparación. (Puedes dar Enter para separar cada paso)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Notas Secretas / Secretos de Cocina</label>
+                    <input type="text" id="recipe-notes" placeholder="Ej. Dejar reposar la masa en frío por 20 minutos extra..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeRecipeModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium shadow-md shadow-brand-600/20">Guardar Receta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: VIEW RECIPE DETAILS -->
+    <div id="view-recipe-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-8 transform transition-all">
+            <div class="relative h-48 bg-slate-100 overflow-hidden">
+                <img id="view-recipe-img" src="" alt="Receta" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent"></div>
+                <button onclick="closeViewRecipeModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-900/50 text-white hover:bg-slate-900/80 flex items-center justify-center transition-all backdrop-blur-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="absolute bottom-4 left-6 right-6 text-white">
+                    <span id="view-recipe-category" class="px-2.5 py-1 bg-brand-600 text-[11px] font-bold rounded-full uppercase tracking-wider">Categoría</span>
+                    <h2 id="view-recipe-title" class="text-2xl font-bold mt-1">Título Receta</h2>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+                <div class="flex items-center space-x-6 text-sm text-slate-500 border-b border-slate-100 pb-4">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-regular fa-clock text-brand-600"></i>
+                        <span id="view-recipe-time">0 mins</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-list-check text-brand-600"></i>
+                        <span id="view-recipe-ing-count">0 ingredientes</span>
+                    </div>
+                </div>
+
+                <!-- Ingredients Checklist -->
+                <div>
+                    <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-basket-shopping text-rose-500"></i>
+                        <span>Ingredientes</span>
+                    </h4>
+                    <ul id="view-recipe-ingredients" class="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                        <!-- Rendered list with interactive checkboxes -->
+                    </ul>
+                </div>
+
+                <!-- Steps -->
+                <div>
+                    <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider mb-3 flex items-center space-x-2">
+                        <i class="fa-solid fa-fire text-rose-500"></i>
+                        <span>Instrucciones de Preparación</span>
+                    </h4>
+                    <div id="view-recipe-instructions" class="space-y-3 text-slate-700 text-sm">
+                        <!-- Rendered steps -->
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div id="view-recipe-notes-box" class="bg-amber-50/60 border border-amber-200/60 p-4 rounded-2xl">
+                    <h5 class="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center space-x-1 mb-1">
+                        <i class="fa-solid fa-lightbulb text-amber-500"></i>
+                        <span>Nota Intima del Cocinero</span>
+                    </h5>
+                    <p id="view-recipe-notes" class="text-xs text-amber-900 leading-relaxed"></p>
+                </div>
+            </div>
+
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+                <button id="view-recipe-order-btn" onclick="" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs px-4 py-2 rounded-xl transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-plus-circle"></i>
+                    <span>Crear Pedido de Esto</span>
+                </button>
+                <div class="space-x-2">
+                    <button id="view-recipe-edit-btn" onclick="" class="px-4 py-2 rounded-xl bg-slate-200 text-slate-700 hover:bg-slate-300 text-xs font-semibold">Editar</button>
+                    <button onclick="closeViewRecipeModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-900 text-xs font-semibold">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT ORDER -->
+    <div id="order-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-8 transform transition-all">
+            <div class="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                <h3 id="order-modal-title" class="font-bold text-slate-800 text-lg flex items-center space-x-2">
+                    <i class="fa-solid fa-cart-shopping text-brand-600"></i>
+                    <span>Nuevo Pedido</span>
+                </h3>
+                <button onclick="closeOrderModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <form id="order-form" onsubmit="saveOrder(event)" class="p-6 space-y-4">
+                <input type="hidden" id="order-id">
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nombre del Cliente *</label>
+                    <input type="text" id="order-customer" required placeholder="Ej. María García" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Platillo o Receta *</label>
+                    <input type="text" id="order-dish" required placeholder="Ej. Pastel de Chocolate / 2kg" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Fecha de Entrega *</label>
+                        <input type="date" id="order-date" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Importe ($) *</label>
+                        <input type="number" step="0.01" min="0" id="order-price" required placeholder="0.00" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Estado del Pedido</label>
+                    <select id="order-status" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                        <option value="Pendiente">⏳ Pendiente</option>
+                        <option value="En preparación">🔥 En preparación</option>
+                        <option value="Entregado">✅ Entregado</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Notas / Detalles Especiales</label>
+                    <textarea id="order-notes" rows="2" placeholder="Ej. Sin alérgenos de nuez, entregar antes de las 4 PM..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"></textarea>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeOrderModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-100">Cancelar</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium shadow-md shadow-brand-600/20">Guardar Pedido</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Storage keys
+        const STORAGE_KEY_RECIPES = 'private_recipes_db_v1';
+        const STORAGE_KEY_ORDERS = 'private_orders_db_v1';
+
+        // State
+        let recipes = [];
+        let orders = [];
+        let activeOrderFilter = 'ALL';
+
+        // Image fallbacks based on categories
+        const CATEGORY_IMAGES = {
+            'Plato Fuerte': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+            'Postres': 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80',
+            'Bebidas': 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80',
+            'Botanas': 'https://images.unsplash.com/photo-1541529086526-db283c563270?auto=format&fit=crop&w=600&q=80',
+            'Salsas': 'https://images.unsplash.com/photo-1472476443507-c7a5948772fc?auto=format&fit=crop&w=600&q=80',
+            'Otros': 'https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&w=600&q=80'
+        };
+
+        // Initialize application on load
+        window.onload = function() {
+            loadLocalData();
+            
+            // Seed initial sample data if empty to give immediate feedback
+            if (recipes.length === 0 && orders.length === 0) {
+                seedInitialData();
+            }
+
+            renderRecipes();
+            renderOrders();
+            updateStats();
+        };
+
+        // Load data safely from localStorage
+        function loadLocalData() {
+            try {
+                const storedRecipes = localStorage.getItem(STORAGE_KEY_RECIPES);
+                const storedOrders = localStorage.getItem(STORAGE_KEY_ORDERS);
+                
+                recipes = storedRecipes ? JSON.parse(storedRecipes) : [];
+                orders = storedOrders ? JSON.parse(storedOrders) : [];
+            } catch (e) {
+                console.error('Error al cargar datos locales', e);
+                recipes = [];
+                orders = [];
+            }
+        }
+
+        // Save recipes to localStorage
+        function saveRecipesToStorage() {
+            localStorage.setItem(STORAGE_KEY_RECIPES, JSON.stringify(recipes));
+            renderRecipes();
+            updateStats();
+        }
+
+        // Save orders to localStorage
+        function saveOrdersToStorage() {
+            localStorage.setItem(STORAGE_KEY_ORDERS, JSON.stringify(orders));
+            renderOrders();
+            updateStats();
+        }
+
+        // Seed initial sample data if completely empty
+        function seedInitialData() {
+            recipes = [
+                {
+                    id: 'rec-1',
+                    title: 'Tarta de Fresa Dulce Intima',
+                    category: 'Postres',
+                    prepTime: 50,
+                    image: 'https://images.unsplash.com/photo-1565958011703-44f9829ba187?auto=format&fit=crop&w=600&q=80',
+                    ingredients: ['250g Harina de trigo', '150g Mantequilla fría', '400g Fresas frescas', '100g Azúcar glass', '1 cdta Extracto de vainilla'],
+                    instructions: '1. Mezclar harina y mantequilla fría hasta obtener consistencia arenosa.\n2. Hornear la base a 180°C durante 15 minutos.\n3. Añadir la crema de vainilla y cubrir con fresas frescas cortadas.\n4. Refrigerar antes de servir.',
+                    notes: 'Para un sabor supremo, barnizar las fresas con una mermelada tibia de albaricoque.'
+                },
+                {
+                    id: 'rec-2',
+                    title: 'Lasaña Casera de la Casa',
+                    category: 'Plato Fuerte',
+                    prepTime: 75,
+                    image: 'https://images.unsplash.com/photo-1574894709920-11b28e7367e3?auto=format&fit=crop&w=600&q=80',
+                    ingredients: ['12 láminas de pasta', '500g Carne molida de res', '1 cebolla picada', '2 dientes de ajo', '400g Queso Mozzarella', '500ml Salsa de tomate casera'],
+                    instructions: '1. Sofreír la cebolla, ajo y carne molida hasta dorar.\n2. Montar en un molde alternando pasta, salsa de carne y queso.\n3. Hornear a 200°C por 35 minutos hasta gratinar.',
+                    notes: 'Dejar reposar 10 minutos al salir del horno para que los cortes queden limpios.'
+                }
+            ];
+
+            const today = new Date().toISOString().split('T')[0];
+            orders = [
+                {
+                    id: 'ord-1',
+                    customer: 'Carlos Mendoza',
+                    dish: 'Tarta de Fresa Dulce Intima',
+                    date: today,
+                    price: 35.00,
+                    status: 'Pendiente',
+                    notes: 'Entregar con empaque de regalo especial.'
+                },
+                {
+                    id: 'ord-2',
+                    customer: 'Sofía Ramos',
+                    dish: 'Lasaña Casera (Molde Grande)',
+                    date: today,
+                    price: 48.50,
+                    status: 'En preparación',
+                    notes: 'Salsa extra arriba por favor.'
+                }
+            ];
+
+            saveRecipesToStorage();
+            saveOrdersToStorage();
+        }
+
+        // Navigation tab switching logic
+        function switchTab(tab) {
+            const recipesSec = document.getElementById('section-recipes');
+            const ordersSec = document.getElementById('section-orders');
+            const recipesBtn = document.getElementById('nav-recipes-btn');
+            const ordersBtn = document.getElementById('nav-orders-btn');
+
+            if (tab === 'recipes') {
+                recipesSec.classList.remove('hidden');
+                ordersSec.classList.add('hidden');
+
+                recipesBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-white text-brand-600 shadow-sm";
+                ordersBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 text-slate-600 hover:text-slate-900";
+            } else {
+                ordersSec.classList.remove('hidden');
+                recipesSec.classList.add('hidden');
+
+                ordersBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 bg-white text-brand-600 shadow-sm";
+                recipesBtn.className = "px-3 sm:px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center space-x-2 text-slate-600 hover:text-slate-900";
+            }
+        }
+
+        // --- RECIPES CONTROLLER ---
+
+        function renderRecipes() {
+            const grid = document.getElementById('recipes-grid');
+            const emptyState = document.getElementById('recipes-empty-state');
+            const searchVal = document.getElementById('recipe-search').value.toLowerCase().trim();
+            const catVal = document.getElementById('recipe-category-filter').value;
+
+            // Filtering logic
+            const filtered = recipes.filter(r => {
+                const matchesSearch = r.title.toLowerCase().includes(searchVal) || 
+                                      r.ingredients.some(i => i.toLowerCase().includes(searchVal));
+                const matchesCat = catVal === 'ALL' || r.category === catVal;
+                return matchesSearch && matchesCat;
+            });
+
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+
+                filtered.forEach(recipe => {
+                    const imgUrl = recipe.image || CATEGORY_IMAGES[recipe.category] || CATEGORY_IMAGES['Otros'];
+                    const card = document.createElement('div');
+                    card.className = "bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-200 flex flex-col group";
+                    card.innerHTML = `
+                        <div class="relative h-44 overflow-hidden bg-slate-100">
+                            <img src="${imgUrl}" alt="${recipe.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='${CATEGORY_IMAGES['Otros']}'">
+                            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-slate-700 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
+                                ${recipe.category}
+                            </span>
+                            <div class="absolute top-3 right-3 flex space-x-1 opacity-90">
+                                <button onclick="editRecipe('${recipe.id}', event)" class="w-8 h-8 rounded-full bg-white/90 text-slate-600 hover:text-brand-600 flex items-center justify-center shadow-sm transition-colors">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                </button>
+                                <button onclick="deleteRecipe('${recipe.id}', event)" class="w-8 h-8 rounded-full bg-white/90 text-slate-600 hover:text-rose-600 flex items-center justify-center shadow-sm transition-colors">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="p-5 flex-grow flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-base mb-1 group-hover:text-brand-600 transition-colors line-clamp-1">${recipe.title}</h3>
+                                <p class="text-xs text-slate-400 mb-3 flex items-center space-x-2">
+                                    <span><i class="fa-regular fa-clock"></i> ${recipe.prepTime || 30} mins</span>
+                                    <span>•</span>
+                                    <span>${recipe.ingredients.length} Ingredientes</span>
+                                </p>
+                                <p class="text-xs text-slate-500 line-clamp-2 mb-4">
+                                    ${recipe.instructions}
+                                </p>
+                            </div>
+                            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <button onclick="openViewRecipeModal('${recipe.id}')" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center space-x-1">
+                                    <span>Ver Receta Completa</span>
+                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                </button>
+                                <button onclick="quickOrderFromRecipe('${recipe.id}', event)" title="Crear un pedido rápidamente de esta receta" class="text-xs bg-slate-100 hover:bg-emerald-50 hover:text-emerald-600 text-slate-600 font-medium px-2.5 py-1 rounded-lg transition-colors flex items-center space-x-1">
+                                    <i class="fa-solid fa-cart-plus"></i>
+                                    <span>Pedir</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            document.getElementById('recipe-count-badge').textContent = recipes.length;
+        }
+
+        function filterRecipes() {
+            renderRecipes();
+        }
+
+        // Open/Close Recipe Modal
+        function openRecipeModal(recipeId = null) {
+            const modal = document.getElementById('recipe-modal');
+            const form = document.getElementById('recipe-form');
+            const titleEl = document.getElementById('recipe-modal-title');
+
+            form.reset();
+            document.getElementById('ingredients-container').innerHTML = '';
+
+            if (recipeId) {
+                const r = recipes.find(item => item.id === recipeId);
+                if (r) {
+                    titleEl.innerHTML = `<i class="fa-solid fa-pen text-brand-600"></i><span>Editar Receta</span>`;
+                    document.getElementById('recipe-id').value = r.id;
+                    document.getElementById('recipe-title').value = r.title;
+                    document.getElementById('recipe-category').value = r.category;
+                    document.getElementById('recipe-prep-time').value = r.prepTime || '';
+                    document.getElementById('recipe-image').value = r.image || '';
+                    document.getElementById('recipe-instructions').value = r.instructions;
+                    document.getElementById('recipe-notes').value = r.notes || '';
+
+                    r.ingredients.forEach(ing => addIngredientInput(ing));
+                }
+            } else {
+                titleEl.innerHTML = `<i class="fa-solid fa-utensils text-brand-600"></i><span>Nueva Receta</span>`;
+                document.getElementById('recipe-id').value = '';
+                // Default 3 ingredient slots
+                addIngredientInput();
+                addIngredientInput();
+                addIngredientInput();
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeRecipeModal() {
+            document.getElementById('recipe-modal').classList.add('hidden');
+        }
+
+        function addIngredientInput(value = '') {
+            const container = document.getElementById('ingredients-container');
+            const div = document.createElement('div');
+            div.className = "flex items-center space-x-2";
+            div.innerHTML = `
+                <input type="text" value="${value.replace(/"/g, '&quot;')}" required placeholder="Ej. 2 tazas de harina" class="ingredient-input flex-grow px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                <button type="button" onclick="this.parentElement.remove()" class="text-slate-400 hover:text-rose-500 p-2">
+                    <i class="fa-solid fa-minus-circle"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+
+        function saveRecipe(event) {
+            event.preventDefault();
+            const id = document.getElementById('recipe-id').value;
+            const title = document.getElementById('recipe-title').value.trim();
+            const category = document.getElementById('recipe-category').value;
+            const prepTime = parseInt(document.getElementById('recipe-prep-time').value) || 0;
+            const image = document.getElementById('recipe-image').value.trim();
+            const instructions = document.getElementById('recipe-instructions').value.trim();
+            const notes = document.getElementById('recipe-notes').value.trim();
+
+            const ingInputs = document.querySelectorAll('.ingredient-input');
+            const ingredients = Array.from(ingInputs).map(inp => inp.value.trim()).filter(v => v !== '');
+
+            if (ingredients.length === 0) {
+                showToast('Por favor agrega al menos un ingrediente', 'error');
+                return;
+            }
+
+            if (id) {
+                // Update
+                const index = recipes.findIndex(r => r.id === id);
+                if (index !== -1) {
+                    recipes[index] = { id, title, category, prepTime, image, ingredients, instructions, notes };
+                }
+            } else {
+                // Create
+                const newRecipe = {
+                    id: 'rec-' + Date.now(),
+                    title,
+                    category,
+                    prepTime,
+                    image,
+                    ingredients,
+                    instructions,
+                    notes
+                };
+                recipes.unshift(newRecipe);
+            }
+
+            saveRecipesToStorage();
+            closeRecipeModal();
+            showToast('Receta guardada con éxito');
+        }
+
+        function editRecipe(id, event) {
+            if (event) event.stopPropagation();
+            openRecipeModal(id);
+        }
+
+        function deleteRecipe(id, event) {
+            if (event) event.stopPropagation();
+            if (confirm('¿Estás seguro de que quieres eliminar esta receta privada?')) {
+                recipes = recipes.filter(r => r.id !== id);
+                saveRecipesToStorage();
+                showToast('Receta eliminada');
+            }
+        }
+
+        // View full recipe detail modal
+        function openViewRecipeModal(id) {
+            const r = recipes.find(item => item.id === id);
+            if (!r) return;
+
+            const modal = document.getElementById('view-recipe-modal');
+            const imgUrl = r.image || CATEGORY_IMAGES[r.category] || CATEGORY_IMAGES['Otros'];
+
+            document.getElementById('view-recipe-img').src = imgUrl;
+            document.getElementById('view-recipe-title').textContent = r.title;
+            document.getElementById('view-recipe-category').textContent = r.category;
+            document.getElementById('view-recipe-time').textContent = `${r.prepTime || 30} mins de prep`;
+            document.getElementById('view-recipe-ing-count').textContent = `${r.ingredients.length} ingredientes`;
+
+            // Render Ingredients Checklist
+            const ingList = document.getElementById('view-recipe-ingredients');
+            ingList.innerHTML = r.ingredients.map((ing, idx) => `
+                <li class="flex items-start space-x-2.5 text-sm text-slate-700">
+                    <input type="checkbox" id="ing-check-${idx}" class="mt-1 accent-brand-600 rounded">
+                    <label for="ing-check-${idx}" class="cursor-pointer selection:bg-none">${ing}</label>
+                </li>
+            `).join('');
+
+            // Render Instructions
+            const stepsContainer = document.getElementById('view-recipe-instructions');
+            const steps = r.instructions.split('\n').filter(s => s.trim() !== '');
+            stepsContainer.innerHTML = steps.map((step, idx) => `
+                <div class="flex items-start space-x-3 p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                    <span class="w-6 h-6 rounded-full bg-rose-100 text-brand-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">${idx + 1}</span>
+                    <p class="leading-relaxed">${step}</p>
+                </div>
+            `).join('');
+
+            // Notes
+            const notesBox = document.getElementById('view-recipe-notes-box');
+            if (r.notes && r.notes.trim()) {
+                notesBox.classList.remove('hidden');
+                document.getElementById('view-recipe-notes').textContent = r.notes;
+            } else {
+                notesBox.classList.add('hidden');
+            }
+
+            // Buttons setup
+            document.getElementById('view-recipe-order-btn').onclick = function() {
+                closeViewRecipeModal();
+                quickOrderFromRecipe(r.id);
+            };
+
+            document.getElementById('view-recipe-edit-btn').onclick = function() {
+                closeViewRecipeModal();
+                openRecipeModal(r.id);
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeViewRecipeModal() {
+            document.getElementById('view-recipe-modal').classList.add('hidden');
+        }
+
+        function quickOrderFromRecipe(recipeId, event = null) {
+            if (event) event.stopPropagation();
+            const r = recipes.find(item => item.id === recipeId);
+            if (!r) return;
+
+            switchTab('orders');
+            openOrderModal();
+            document.getElementById('order-dish').value = r.title;
+        }
+
+        // --- ORDERS CONTROLLER ---
+
+        function renderOrders() {
+            const tbody = document.getElementById('orders-table-body');
+            const emptyState = document.getElementById('orders-empty-state');
+
+            const filtered = orders.filter(o => {
+                if (activeOrderFilter === 'ALL') return true;
+                return o.status === activeOrderFilter;
+            });
+
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+
+                filtered.forEach(ord => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/80 transition-colors";
+
+                    // Badge colors according to status
+                    let statusBadgeClass = "bg-amber-100 text-amber-800 border-amber-200";
+                    if (ord.status === 'En preparación') {
+                        statusBadgeClass = "bg-blue-100 text-blue-800 border-blue-200";
+                    } else if (ord.status === 'Entregado') {
+                        statusBadgeClass = "bg-emerald-100 text-emerald-800 border-emerald-200";
+                    }
+
+                    tr.innerHTML = `
+                        <td class="py-3.5 px-4 font-semibold text-slate-800">${ord.customer}</td>
+                        <td class="py-3.5 px-4 text-slate-700">
+                            <div>${ord.dish}</div>
+                            ${ord.notes ? `<div class="text-xs text-slate-400 italic">${ord.notes}</div>` : ''}
+                        </td>
+                        <td class="py-3.5 px-4 text-slate-600 text-xs">${formatDate(ord.date)}</td>
+                        <td class="py-3.5 px-4">
+                            <select onchange="updateOrderStatus('${ord.id}', this.value)" class="text-xs font-bold px-2.5 py-1 rounded-full border ${statusBadgeClass} focus:outline-none cursor-pointer">
+                                <option value="Pendiente" ${ord.status === 'Pendiente' ? 'selected' : ''}>⏳ Pendiente</option>
+                                <option value="En preparación" ${ord.status === 'En preparación' ? 'selected' : ''}>🔥 En preparación</option>
+                                <option value="Entregado" ${ord.status === 'Entregado' ? 'selected' : ''}>✅ Entregado</option>
+                            </select>
+                        </td>
+                        <td class="py-3.5 px-4 text-right font-bold text-slate-800">$${parseFloat(ord.price).toFixed(2)}</td>
+                        <td class="py-3.5 px-4 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button onclick="editOrder('${ord.id}')" class="text-slate-400 hover:text-brand-600 transition-colors p-1">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="deleteOrder('${ord.id}')" class="text-slate-400 hover:text-rose-600 transition-colors p-1">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function filterOrdersByStatus(status) {
+            activeOrderFilter = status;
+            document.querySelectorAll('.order-filter-btn').forEach(btn => {
+                if (btn.dataset.status === status) {
+                    btn.className = "order-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-slate-900 text-white";
+                } else {
+                    btn.className = "order-filter-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-100";
+                }
+            });
+            renderOrders();
+        }
+
+        function updateOrderStatus(id, newStatus) {
+            const index = orders.findIndex(o => o.id === id);
+            if (index !== -1) {
+                orders[index].status = newStatus;
+                saveOrdersToStorage();
+                showToast(`Estado actualizado a: ${newStatus}`);
+            }
+        }
+
+        function openOrderModal(orderId = null) {
+            const modal = document.getElementById('order-modal');
+            const form = document.getElementById('order-form');
+            const titleEl = document.getElementById('order-modal-title');
+
+            form.reset();
+            // Default date to today
+            document.getElementById('order-date').value = new Date().toISOString().split('T')[0];
+
+            if (orderId) {
+                const ord = orders.find(o => o.id === orderId);
+                if (ord) {
+                    titleEl.innerHTML = `<i class="fa-solid fa-pen text-brand-600"></i><span>Editar Pedido</span>`;
+                    document.getElementById('order-id').value = ord.id;
+                    document.getElementById('order-customer').value = ord.customer;
+                    document.getElementById('order-dish').value = ord.dish;
+                    document.getElementById('order-date').value = ord.date;
+                    document.getElementById('order-price').value = ord.price;
+                    document.getElementById('order-status').value = ord.status;
+                    document.getElementById('order-notes').value = ord.notes || '';
+                }
+            } else {
+                titleEl.innerHTML = `<i class="fa-solid fa-cart-shopping text-brand-600"></i><span>Nuevo Pedido</span>`;
+                document.getElementById('order-id').value = '';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.add('hidden');
+        }
+
+        function saveOrder(event) {
+            event.preventDefault();
+            const id = document.getElementById('order-id').value;
+            const customer = document.getElementById('order-customer').value.trim();
+            const dish = document.getElementById('order-dish').value.trim();
+            const date = document.getElementById('order-date').value;
+            const price = parseFloat(document.getElementById('order-price').value) || 0;
+            const status = document.getElementById('order-status').value;
+            const notes = document.getElementById('order-notes').value.trim();
+
+            if (id) {
+                const idx = orders.findIndex(o => o.id === id);
+                if (idx !== -1) {
+                    orders[idx] = { id, customer, dish, date, price, status, notes };
+                }
+            } else {
+                const newOrder = {
+                    id: 'ord-' + Date.now(),
+                    customer,
+                    dish,
+                    date,
+                    price,
+                    status,
+                    notes
+                };
+                orders.unshift(newOrder);
+            }
+
+            saveOrdersToStorage();
+            closeOrderModal();
+            showToast('Pedido guardado correctamente');
+        }
+
+        function editOrder(id) {
+            openOrderModal(id);
+        }
+
+        function deleteOrder(id) {
+            if (confirm('¿Deseas eliminar este registro de pedido?')) {
+                orders = orders.filter(o => o.id !== id);
+                saveOrdersToStorage();
+                showToast('Pedido eliminado');
+            }
+        }
+
+        // --- DASHBOARD / STATS ---
+
+        function updateStats() {
+            const pendingCount = orders.filter(o => o.status === 'Pendiente').length;
+            const prepCount = orders.filter(o => o.status === 'En preparación').length;
+            const totalRevenue = orders.reduce((sum, o) => sum + (parseFloat(o.price) || 0), 0);
+
+            document.getElementById('stat-pending-orders').textContent = pendingCount;
+            document.getElementById('stat-prep-orders').textContent = prepCount;
+            document.getElementById('stat-total-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+
+            const badge = document.getElementById('pending-orders-badge');
+            if (pendingCount > 0) {
+                badge.textContent = pendingCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // --- UTILS ---
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-message');
+            const iconEl = document.getElementById('toast-icon');
+
+            msgEl.textContent = message;
+            if (type === 'error') {
+                iconEl.className = "text-rose-400";
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i>';
+            } else {
+                iconEl.className = "text-emerald-400";
+                iconEl.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
